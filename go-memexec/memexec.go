@@ -6,13 +6,21 @@ import (
 	"os/exec"
 )
 
+type LoadAppInfo struct {
+	FileName   string
+	Dir        string
+	AppBytes   []byte
+	AutoDelete bool
+}
+
 type Option func(e *Exec)
 
 // Exec is an in-memory executable code unit.
 type Exec struct {
-	f     *os.File
-	opts  []func(cmd *exec.Cmd)
-	clean func() error
+	f          *os.File
+	opts       []func(cmd *exec.Cmd)
+	clean      func() error
+	autoDelete bool
 }
 
 // WithPrepare configures cmd with default values such as Env, Dir, etc.
@@ -31,12 +39,12 @@ func WithCleanup(fn func() error) Option {
 
 // New creates new memory execution object that can be
 // used for executing commands on a memory based binary.
-func New(dir string, b []byte, opts ...Option) (*Exec, error) {
-	f, err := open(dir, b)
+func New(app *LoadAppInfo, opts ...Option) (*Exec, error) {
+	f, err := open(app)
 	if err != nil {
 		return nil, err
 	}
-	e := &Exec{f: f}
+	e := &Exec{f: f, autoDelete: app.AutoDelete}
 	for _, opt := range opts {
 		opt(e)
 	}
@@ -64,7 +72,7 @@ func (m *Exec) CommandContext(ctx context.Context, args ...string) *exec.Cmd {
 // Any further command will fail, it's client's responsibility
 // to control the flow by using synchronization algorithms.
 func (m *Exec) Close() error {
-	if err := clean(m.f); err != nil {
+	if err := clean(m.f, m.autoDelete); err != nil {
 		if m.clean != nil {
 			_ = m.clean()
 		}

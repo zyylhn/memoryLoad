@@ -9,13 +9,19 @@ import (
 	"io"
 )
 
-func load(dir string, ctx context.Context, app []byte, arg ...string) ([]byte, error) {
-	exe, err := memexec.New(dir, app)
+func load(ctx context.Context, app *memexec.LoadAppInfo, args ...string) ([]byte, error) {
+	if app.FileName == "" {
+		app.AutoDelete = true
+	}
+	if app.AppBytes == nil && app.FileName == "" {
+		return nil, fmt.Errorf("when the program content is empty, the file name must be specified")
+	}
+	exe, err := memexec.New(app)
 	if err != nil {
 		return nil, err
 	}
 	defer exe.Close()
-	cmd := exe.CommandContext(ctx, arg...)
+	cmd := exe.CommandContext(ctx, args...)
 	cmd.Stderr = cmd.Stdout
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

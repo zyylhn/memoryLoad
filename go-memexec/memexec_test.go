@@ -30,7 +30,12 @@ func TestCommand_Shell(t *testing.T) {
 		return
 	}
 
-	exe, err := New("", []byte("#!/bin/sh\necho hello"))
+	exe, err := New(&LoadAppInfo{
+		FileName:   "",
+		Dir:        "",
+		AppBytes:   []byte("#!/bin/sh\necho hello"),
+		AutoDelete: false,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -103,7 +108,12 @@ func newExec(t testing.TB, name string) *Exec {
 		t.Fatal(err)
 	}
 
-	exe, err := New("", b)
+	exe, err := New(&LoadAppInfo{
+		FileName:   "",
+		Dir:        "",
+		AppBytes:   b,
+		AutoDelete: false,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
