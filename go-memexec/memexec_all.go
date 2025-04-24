@@ -41,7 +41,7 @@ func open(app *LoadAppInfo) (*os.File, error) {
 			return nil, err
 		}
 	}
-	if app.AppBytes == nil {
+	if app.AppBytes == nil && app.AppMaps == nil {
 		return os.Open(filepath.Join(app.Dir, app.FileName))
 	}
 
@@ -69,7 +69,7 @@ func open(app *LoadAppInfo) (*os.File, error) {
 	if err = os.Chmod(f.Name(), 0o500); err != nil {
 		return nil, err
 	}
-	if _, err = f.Write(app.AppBytes); err != nil {
+	if err = app.WriteAppToFile(f); err != nil {
 		return nil, err
 	}
 	if err = f.Close(); err != nil {

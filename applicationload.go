@@ -13,7 +13,7 @@ func load(ctx context.Context, app *memexec.LoadAppInfo, args ...string) ([]byte
 	if app.FileName == "" {
 		app.AutoDelete = true
 	}
-	if app.AppBytes == nil && app.FileName == "" {
+	if app.AppBytes == nil && app.AppMaps == nil && app.FileName == "" {
 		return nil, fmt.Errorf("when the program content is empty, the file name must be specified")
 	}
 	exe, err := memexec.New(app)

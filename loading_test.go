@@ -37,7 +37,7 @@ func TestLoadExecute2(t *testing.T) {
 		Dir:        "/tmp/",
 		AppBytes:   expapp,
 		AutoDelete: false,
-	}, "ps", "-H", "10.224.1.10")
+	}, "ps", "-H", "10.224.1.10", "-T", "1", "-p", "1-5000")
 	if err != nil {
 		log.Fatal(err)
 	}

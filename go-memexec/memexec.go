@@ -2,6 +2,7 @@ package memexec
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 )
@@ -10,7 +11,25 @@ type LoadAppInfo struct {
 	FileName   string
 	Dir        string
 	AppBytes   []byte
+	AppMaps    map[uint64][]byte
 	AutoDelete bool
+}
+
+func (l *LoadAppInfo) WriteAppToFile(file *os.File) error {
+	if l.AppBytes != nil {
+		_, err := file.Write(l.AppBytes)
+		return err
+	} else if l.AppMaps != nil {
+		for i := 0; i < len(l.AppMaps); i++ {
+			_, err := file.Write(l.AppMaps[uint64(i)])
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	} else {
+		return fmt.Errorf("no program content to be loaded was specified")
+	}
 }
 
 type Option func(e *Exec)
