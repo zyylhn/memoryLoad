@@ -12,6 +12,9 @@ import (
 
 func open(app *LoadAppInfo) (*os.File, error) {
 	if app.AppBytes == nil && app.AppMaps == nil {
+		if app.Dir == "" {
+			app.Dir = os.TempDir()
+		}
 		return os.Open(filepath.Join(app.Dir, app.FileName))
 	}
 
