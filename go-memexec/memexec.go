@@ -8,11 +8,12 @@ import (
 )
 
 type LoadAppInfo struct {
-	FileName   string
-	Dir        string
-	AppBytes   []byte
-	AppMaps    map[uint64][]byte
-	AutoDelete bool
+	FileName     string
+	Dir          string
+	AppBytes     []byte
+	AppMaps      map[uint64][]byte
+	AutoDelete   bool
+	MaxResultLen int
 }
 
 func (l *LoadAppInfo) WriteAppToFile(file *os.File) error {

@@ -49,6 +49,9 @@ func load(ctx context.Context, app *memexec.LoadAppInfo, args ...string) ([]byte
 	var re []byte
 	buf := make([]byte, 1024)
 	var n int
+	if app.MaxResultLen == 0 {
+		app.MaxResultLen = 1024 * 1024 * 10
+	}
 	for {
 		n, err = stdout.Read(buf)
 		if err == io.EOF {
@@ -58,6 +61,9 @@ func load(ctx context.Context, app *memexec.LoadAppInfo, args ...string) ([]byte
 			return nil, err
 		}
 		re = append(re, buf[:n]...)
+		if len(re) >= app.MaxResultLen {
+			break
+		}
 	}
 	if err = cmd.Wait(); err != nil {
 		//fmt.Println("Error waiting for command:", err)
