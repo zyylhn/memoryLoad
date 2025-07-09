@@ -44,14 +44,16 @@ func load(ctx context.Context, app *memexec.LoadAppInfo, args ...string) ([]byte
 	go func() {
 		for stderrScanner.Scan() {
 			errorMsg += stderrScanner.Text() + "\n"
+			if len(errorMsg) > app.MaxResultLen {
+				errorMsg = errorMsg[:app.MaxResultLen]
+				break
+			}
 		}
 	}()
 	var re []byte
 	buf := make([]byte, 1024)
+	rb := NewRingBuffer(app.MaxResultLen)
 	var n int
-	if app.MaxResultLen == 0 {
-		app.MaxResultLen = 1024 * 1024 * 10
-	}
 	for {
 		n, err = stdout.Read(buf)
 		if err == io.EOF {
@@ -60,11 +62,9 @@ func load(ctx context.Context, app *memexec.LoadAppInfo, args ...string) ([]byte
 		if err != nil {
 			return nil, err
 		}
-		re = append(re, buf[:n]...)
-		if len(re) >= app.MaxResultLen {
-			break
-		}
+		rb.Write(buf[:n])
 	}
+	re = rb.Bytes()
 	if err = cmd.Wait(); err != nil {
 		//fmt.Println("Error waiting for command:", err)
 		return nil, errors.New(fmt.Sprintf("error waiting for command:%v error message'%v'", err, errorMsg))
@@ -77,4 +77,49 @@ func load(ctx context.Context, app *memexec.LoadAppInfo, args ...string) ([]byte
 		}
 	}
 	return re, nil
+}
+
+type RingBuffer struct {
+	data  []byte
+	size  int
+	pos   int
+	full  bool
+	unLim bool // 是否不限制长度
+}
+
+func NewRingBuffer(size int) *RingBuffer {
+	if size <= 0 {
+		return &RingBuffer{
+			data:  make([]byte, 0, 4096),
+			unLim: true,
+		}
+	}
+	return &RingBuffer{
+		data: make([]byte, size),
+		size: size,
+	}
+}
+
+func (r *RingBuffer) Write(p []byte) {
+	if r.unLim {
+		r.data = append(r.data, p...)
+		return
+	}
+	for _, b := range p {
+		r.data[r.pos] = b
+		r.pos = (r.pos + 1) % r.size
+		if r.pos == 0 {
+			r.full = true
+		}
+	}
+}
+
+func (r *RingBuffer) Bytes() []byte {
+	if r.unLim {
+		return r.data
+	}
+	if !r.full {
+		return r.data[:r.pos]
+	}
+	return append(r.data[r.pos:], r.data[:r.pos]...)
 }

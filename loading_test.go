@@ -74,3 +74,19 @@ func TestLoadExecute4(t *testing.T) {
 	}
 	fmt.Println(string(re))
 }
+
+// 测试最大长度
+func TestLoadExecute5(t *testing.T) {
+	ctx := context.Background()
+	re, err := Load(ctx, &memexec.LoadAppInfo{
+		FileName:     "zscan",
+		Dir:          "/tmp",
+		AppBytes:     expapp,
+		AutoDelete:   false,
+		MaxResultLen: 100,
+	}, "ps", "-H", "10.224.1.10")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(string(re))
+}
